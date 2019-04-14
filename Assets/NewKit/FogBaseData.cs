@@ -383,11 +383,7 @@ namespace Battle.Logic.FogAbout
 			array_h = (int) System.Math.Ceiling ((double) h / AlphaArraySize);
 
 			totalAlphaArray = new ulong [array_w, array_h];
-
-#if DEBUG && !PROFILER
-//			FTools.FogDebug.LogAllocSize ("[BaseData]", default (ulong), array_w * array_h);
-#endif
-
+            
 			__fogRangeList = new List<FogTransparentRange> ();
 			__fogRangeTable = new Dictionary<int, int> ();
 			__fogRangeCache = null;
@@ -395,7 +391,7 @@ namespace Battle.Logic.FogAbout
 
 		private ulong __AlphaPos (int x, int y)
 		{
-			return ALPHABASE << ((x << AlphaArrayBitSize) + y);
+			return ALPHABASE << ((y << AlphaArrayBitSize) + x);
 		}
 
 		#region Set Data Methods
@@ -424,10 +420,6 @@ namespace Battle.Logic.FogAbout
 			if (arrayX >= 0 && arrayX < array_w && arrayY >= 0 && arrayY < array_h) {
 				return (totalAlphaArray [arrayX, arrayY] & __AlphaPos (subX, subY)) > 0;
 			} else {
-#if DEBUG && !PROFILER
-//				EditorDebug.Error ("FogBaseData.IsTransparent DATA ERROR!\r\n" +
-//				string.Format ("w:{0}, x:{1}, h:{2}, y:{3}, sub_x:{4}, sub_y:{5}", array_w, arrayX, array_h, arrayY, subX, subY));
-#endif
 				return false;
 			}
 		}
@@ -438,28 +430,8 @@ namespace Battle.Logic.FogAbout
 
 		public void UpdateTransparent (int x, int y, int r)
 		{
-			#if UNITY_EDITOR
-			global::System.Text.StringBuilder sb = new global::System.Text.StringBuilder ();
-			global::System.Diagnostics.Stopwatch sw = new global::System.Diagnostics.Stopwatch ();
-			#endif
-
-			#if UNITY_EDITOR
-			sw.Reset ();
-			sw.Start ();
-			#endif
-
 			FogTransparentRange rangeData = __GetRangeInfo (r);
-
-			#if UNITY_EDITOR
-			sw.Stop ();
-			sb.AppendLine (string.Format ("cost {0} ms/{1} ticks", sw.Elapsed.TotalMilliseconds, sw.ElapsedTicks));
-			#endif
-
-			#if UNITY_EDITOR
-			sw.Reset ();
-			sw.Start ();
-			#endif
-
+            
 			/// 先求取视野范围内的有效坐标
 			/// 即根据视点坐标求出视野范围内有效用于战场的尺寸范围
 			/// 有效坐标奉行小闭大开原则
@@ -470,84 +442,22 @@ namespace Battle.Logic.FogAbout
 			int view_lt_x = x - r;
 			int view_lt_y = y - r;
 
-			#if UNITY_EDITOR
-			sw.Stop ();
-			sb.AppendLine (string.Format ("cost {0} ms/{1} ticks", sw.Elapsed.TotalMilliseconds, sw.ElapsedTicks));
-			#endif
-
-			#if UNITY_EDITOR
-			sw.Reset ();
-			sw.Start ();
-			#endif
-
 			/// 操作九宫格四边 上（y值为0开始）
 			__UpdateTransparentTop (rangeData, view_lt_x, view_lt_y, view_l, view_r, view_t, view_b);
-
-			#if UNITY_EDITOR
-			sw.Stop ();
-			sb.AppendLine (string.Format ("cost {0} ms/{1} ticks", sw.Elapsed.TotalMilliseconds, sw.ElapsedTicks));
-			#endif
-
-			#if UNITY_EDITOR
-			sw.Reset ();
-			sw.Start ();
-			#endif
-
+            
 			/// 操作九宫格四边 左（x值为0开始）
 			__UpdateTransparentLeft (rangeData, view_lt_x, view_lt_y, view_l, view_r, view_t, view_b);
-
-			#if UNITY_EDITOR
-			sw.Stop ();
-			sb.AppendLine (string.Format ("cost {0} ms/{1} ticks", sw.Elapsed.TotalMilliseconds, sw.ElapsedTicks));
-			#endif
-
-			#if UNITY_EDITOR
-			sw.Reset ();
-			sw.Start ();
-			#endif
-
+            
 			/// 操作九宫格中心全部为透明区域
 			__UpdateTransparentCenter (rangeData, view_lt_x, view_lt_y, view_l, view_r, view_t, view_b);
-
-			#if UNITY_EDITOR
-			sw.Stop ();
-			sb.AppendLine (string.Format ("cost {0} ms/{1} ticks", sw.Elapsed.TotalMilliseconds, sw.ElapsedTicks));
-			#endif
-
-			#if UNITY_EDITOR
-			sw.Reset ();
-			sw.Start ();
-			#endif
-
+            
 			/// 操作九宫格四边 右
 			__UpdateTransparentRight (rangeData, view_lt_x, view_lt_y, view_l, view_r, view_t, view_b);
-
-			#if UNITY_EDITOR
-			sw.Stop ();
-			sb.AppendLine (string.Format ("cost {0} ms/{1} ticks", sw.Elapsed.TotalMilliseconds, sw.ElapsedTicks));
-			#endif
-
-			#if UNITY_EDITOR
-			sw.Reset ();
-			sw.Start ();
-			#endif
-
+            
 			/// 操作九宫格四边 下
 			__UpdateTransparentBottom (rangeData, view_lt_x, view_lt_y, view_l, view_r, view_t, view_b);
 			/// 忽略九宫格四角
-
-			#if UNITY_EDITOR
-			sw.Stop ();
-			sb.AppendLine (string.Format ("cost {0} ms/{1} ticks", sw.Elapsed.TotalMilliseconds, sw.ElapsedTicks));
-			#endif
-
-			#if UNITY_EDITOR
-			string __log = sb.ToString ();
-			if (__log.Length > 0) {
-				UnityEngine.Debug.LogError (__log);
-			}
-			#endif
-
+            
 		}
 
 		private FogTransparentRange __GetRangeInfo (int r)
@@ -677,32 +587,6 @@ namespace Battle.Logic.FogAbout
 				int __last_bit_right = _right_bit_x;
 				int __last_bit_top = AlphaArraySizeMask - _top_bit_y;
 				int __last_bit_bottom = _bottom_bit_y;
-		
-//				if (_left_bit_x != 0 && _top_bit_y != 0) {
-//					totalAlphaArray [_left_array_x, _top_array_y] |= MASK_XMAX_YMAX [__last_bit_left, __last_bit_top];
-//				}
-//				if (_left_bit_x != 0 && _bottom_bit_y != AlphaArraySizeMask) {
-//					totalAlphaArray [_left_array_x, _bottom_array_y] |= MASK_XMAX_YMIN [__last_bit_left, __last_bit_bottom];
-//				}
-//				if (_right_bit_x != AlphaArraySizeMask && _top_bit_y != 0) {
-//					totalAlphaArray [_right_array_x, _top_array_y] |= MASK_XMIN_YMAX [__last_bit_right, __last_bit_top];
-//				}
-//				if (_right_bit_x != AlphaArraySizeMask && _bottom_bit_y != AlphaArraySizeMask) {
-//					totalAlphaArray [_right_array_x, _bottom_array_y] |= MASK_XMIN_YMIN [__last_bit_right, __last_bit_bottom];
-//				}
-//		
-//				for (i = _c_array_l, imax = _c_array_r + 1; i < imax; i++) {
-//					totalAlphaArray [i, _top_array_y] |= MASK_XMAX_YMAX [AlphaArraySizeMask, __last_bit_top];
-//				}
-//				for (i = _c_array_l, imax = _c_array_r + 1; i < imax; i++) {
-//					totalAlphaArray [i, _bottom_array_y] |= MASK_XMAX_YMIN [AlphaArraySizeMask, __last_bit_bottom];
-//				}
-//				for (j = _c_array_t, jmax = _c_array_b + 1; j < jmax; j++) {
-//					totalAlphaArray [_left_array_x, j] |= MASK_XMAX_YMIN [__last_bit_left, AlphaArraySizeMask];
-//				}
-//				for (j = _c_array_t, jmax = _c_array_b + 1; j < jmax; j++) {
-//					totalAlphaArray [_right_array_x, j] |= MASK_XMIN_YMIN [__last_bit_right, AlphaArraySizeMask];
-//				}
 
 				if (_left_bit_x != 0 && _top_bit_y != 0) {
 					totalAlphaArray [_left_array_x, _top_array_y] |= MASK_XMAX_YMAX [__last_bit_left, __last_bit_top];
@@ -718,16 +602,16 @@ namespace Battle.Logic.FogAbout
 				}
 
 				for (i = _c_array_l, imax = _c_array_r + 1; i < imax; i++) {
-					totalAlphaArray [i, _top_array_y] |= MASK_XMIN_YMIN [AlphaArraySizeMask, __last_bit_top];
+					totalAlphaArray [i, _top_array_y] |= MASK_XMIN_YMAX [AlphaArraySizeMask, __last_bit_top];
 				}
 				for (i = _c_array_l, imax = _c_array_r + 1; i < imax; i++) {
-					totalAlphaArray [i, _bottom_array_y] |= MASK_XMIN_YMAX [AlphaArraySizeMask, __last_bit_bottom];
+					totalAlphaArray [i, _bottom_array_y] |= MASK_XMIN_YMIN [AlphaArraySizeMask, __last_bit_bottom];
 				}
 				for (j = _c_array_t, jmax = _c_array_b + 1; j < jmax; j++) {
-					totalAlphaArray [_left_array_x, j] |= MASK_XMIN_YMAX [__last_bit_left, AlphaArraySizeMask];
+					totalAlphaArray [_left_array_x, j] |= MASK_XMAX_YMAX [__last_bit_left, AlphaArraySizeMask];
 				}
 				for (j = _c_array_t, jmax = _c_array_b + 1; j < jmax; j++) {
-					totalAlphaArray [_right_array_x, j] |= MASK_XMAX_YMAX [__last_bit_right, AlphaArraySizeMask];
+					totalAlphaArray [_right_array_x, j] |= MASK_XMIN_YMAX [__last_bit_right, AlphaArraySizeMask];
 				}
 			}
 		}
@@ -833,6 +717,54 @@ namespace Battle.Logic.FogAbout
 
 
 		#if UNITY_EDITOR
+
+        public void SetBit (int x, int y)
+        {
+            /*
+            totalAlphaArray[10, 10] |= MASK_XMIN_YMIN[0, 3];
+            totalAlphaArray[10, 11] |= MASK_XMIN_YMIN[0, 4];
+            totalAlphaArray[10, 12] |= MASK_XMIN_YMIN[5, 5];
+            totalAlphaArray[10, 13] |= MASK_XMIN_YMIN[5, 6];
+            totalAlphaArray[10, 14] |= MASK_XMIN_YMIN[7, 3];
+            totalAlphaArray[10, 15] |= MASK_XMIN_YMIN[7, 2];
+            totalAlphaArray[10, 16] |= MASK_XMIN_YMIN[7, 7];
+            totalAlphaArray[10, 17] |= MASK_XMIN_YMIN[7, 4];
+
+
+            totalAlphaArray[12, 10] |= MASK_XMAX_YMIN[0, 3];
+            totalAlphaArray[12, 11] |= MASK_XMAX_YMIN[0, 4];
+            totalAlphaArray[12, 12] |= MASK_XMAX_YMIN[5, 5];
+            totalAlphaArray[12, 13] |= MASK_XMAX_YMIN[5, 6];
+            totalAlphaArray[12, 14] |= MASK_XMAX_YMIN[7, 3];
+            totalAlphaArray[12, 15] |= MASK_XMAX_YMIN[7, 2];
+            totalAlphaArray[12, 16] |= MASK_XMAX_YMIN[7, 7];
+            totalAlphaArray[12, 17] |= MASK_XMAX_YMIN[7, 4];
+
+            totalAlphaArray[14, 10] |= MASK_XMIN_YMAX[0, 3];
+            totalAlphaArray[14, 11] |= MASK_XMIN_YMAX[0, 4];
+            totalAlphaArray[14, 12] |= MASK_XMIN_YMAX[5, 5];
+            totalAlphaArray[14, 13] |= MASK_XMIN_YMAX[5, 6];
+            totalAlphaArray[14, 14] |= MASK_XMIN_YMAX[7, 3];
+            totalAlphaArray[14, 15] |= MASK_XMIN_YMAX[7, 2];
+            totalAlphaArray[14, 16] |= MASK_XMIN_YMAX[7, 7];
+            totalAlphaArray[14, 17] |= MASK_XMIN_YMAX[7, 4];
+            
+            totalAlphaArray[16, 10] |= MASK_XMAX_YMAX[0, 3];
+            totalAlphaArray[16, 11] |= MASK_XMAX_YMAX[0, 4];
+            totalAlphaArray[16, 12] |= MASK_XMAX_YMAX[5, 5];
+            totalAlphaArray[16, 13] |= MASK_XMAX_YMAX[5, 6];
+            totalAlphaArray[16, 14] |= MASK_XMAX_YMAX[7, 3];
+            totalAlphaArray[16, 15] |= MASK_XMAX_YMAX[7, 2];
+            totalAlphaArray[16, 16] |= MASK_XMAX_YMAX[7, 7];
+            totalAlphaArray[16, 17] |= MASK_XMAX_YMAX[7, 4];
+            */
+
+            for(int i = 0; i < 4; i++) {
+                for(int j = 0; j < 8; j++) {
+                    totalAlphaArray[10 + i * 2, 10 + j * 2] = MASK_XMAX_YMAX[i,j];
+                }
+            }
+        }
 
 		public UnityEngine.Texture2D SaveTexture ()
 		{

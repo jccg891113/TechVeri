@@ -23,6 +23,7 @@ public class Test2 : MonoBehaviour
 	void OnGUI ()
 	{
 		if (GUILayout.Button ("Print")) {
+            //kit.SetBit ((int)(obj.transform.localPosition.x + delta_x), (int)(obj.transform.localPosition.y + delta_y));
 			kit.UpdateTransparent ((int) (obj.transform.localPosition.x + delta_x), (int) (obj.transform.localPosition.y + delta_y), r);
 			ri.texture = kit.SaveTexture ();
 		}
